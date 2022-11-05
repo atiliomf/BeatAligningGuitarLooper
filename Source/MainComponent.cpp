@@ -8,7 +8,6 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "Eigen/Eigen"
-#include <fftw3.h>
 #include "OdfSpectralFluxLogFiltered.h"
 
 #define fs 48000
@@ -153,15 +152,15 @@ public:
         WavAudioFormat wavFormat;
         
         MemoryInputStream *mis = new MemoryInputStream (BinaryData::bd_32768_wav, BinaryData::bd_32768_wavSize, false);
-        ScopedPointer<AudioFormatReader> reader = wavFormat.createReaderFor(mis, true);
+        auto reader = rawToUniquePtr (wavFormat.createReaderFor(mis, true));
         reader->read(&bd, 0, 32768, 0, true, false);
         
         mis = new MemoryInputStream (BinaryData::sn_32768_wav, BinaryData::sn_32768_wavSize, false);
-        reader = wavFormat.createReaderFor(mis, true);
+        reader = rawToUniquePtr (wavFormat.createReaderFor(mis, true));
         reader->read(&sn, 0, 32768, 0, true, false);
         
         mis = new MemoryInputStream (BinaryData::hh_32768_wav, BinaryData::hh_32768_wavSize, false);
-        reader = wavFormat.createReaderFor(mis, true);
+        reader = rawToUniquePtr (wavFormat.createReaderFor(mis, true));
         reader->read(&hh, 0, 32768, 0, true, false);
         
         
@@ -176,11 +175,11 @@ public:
         midiCcReset = 18;
         
         
-        deviceManager.addMidiInputCallback("", this);
-        StringArray midiDevices = MidiInput::getDevices();
+        deviceManager.addMidiInputDeviceCallback("", this);
+        auto midiDevices = MidiInput::getAvailableDevices();
         for (int i = 0; i< midiDevices.size(); ++i)
         {
-            deviceManager.setMidiInputEnabled(midiDevices.getReference(i),true);
+            deviceManager.setMidiInputDeviceEnabled(midiDevices[i].identifier, true);
         }
     
         juce::AudioDeviceManager::AudioDeviceSetup setup;
@@ -295,13 +294,13 @@ public:
         
         
         thrOdf.initialise(loopData.getReadPointer(0), &validLoopData, &loopDataFinished, &odfData, &validOdfData, &odfTm, &odfDataFinished);
-        thrOdf.startThread(5);
+        thrOdf.startThread(Thread::Priority::normal);
         thrTg.initialise(&odfData, &validOdfData, &odfTm, &odfDataFinished, &tgData, &validTgData, &tgDataFinished,
                          pathIndex, &pathIndexValid, pathPhase, pathMag,
                          &drums, &drumsReady, &bd, &sn, &hh,
                          &startCue, &stopCue,
                          &beatAlignmentGridSize);
-        thrTg.startThread(5);
+        thrTg.startThread(Thread::Priority::normal);
     }
     
     void getNextAudioBlock (const AudioSourceChannelInfo& bufferToFill) override
@@ -318,26 +317,30 @@ public:
         incomingMidi.clear();
         messageCollector.removeNextBlockOfMessages(incomingMidi, blockSize);
         
-        MidiBuffer::Iterator iterator(incomingMidi);
         MidiMessage message;
         
         bool footSwitchPressed = false;
         bool resetPressed = false;
         int footSwitchSamplePosition;
+        
         if (!incomingMidi.isEmpty())
         {
-            while (!footSwitchPressed && iterator.getNextEvent(message, footSwitchSamplePosition))
+            for (const auto meta : incomingMidi)
             {
+                message = meta.getMessage();
+                footSwitchSamplePosition = meta.samplePosition;
+                
                 if (message.isController() && message.isControllerOfType(midiCcRecord.get()) && message.getControllerValue() == 127)
                 {
                     //DBG("footSwitch detected at position: " << footSwitchSamplePosition);
                     footSwitchPressed = true;
+                    break;
                 }
-                else if (message.isController() && message.isControllerOfType(midiCcReset.get()) && message.getControllerValue() == 127){
+                else if (message.isController() && message.isControllerOfType(midiCcReset.get()) && message.getControllerValue() == 127)
+                {
                     resetPressed = true;
                     DBG("resetButton");
                 }
-                
             }
         }
         
@@ -462,7 +465,7 @@ public:
         
         
         // ====================== OUTPUT =====================
-        const float* inBuffer = bufferToFill.buffer->getReadPointer (0, bufferToFill.startSample);
+        //const float* inBuffer = bufferToFill.buffer->getReadPointer (0, bufferToFill.startSample);
         float* outBufferLeft = bufferToFill.buffer->getWritePointer (0, bufferToFill.startSample);
         float* outBufferRight = bufferToFill.buffer->getWritePointer (1, bufferToFill.startSample);
         

@@ -3,8 +3,8 @@
 <JUCERPROJECT id="Kf2529" name="BaGLApp" displaySplashScreen="1" reportAppUsage="1"
               splashScreenColour="Dark" projectType="guiapp" version="0.82"
               bundleIdentifier="at.iem.BaGLApp" includeBinaryInAppConfig="1"
-              cppLanguageStandard="14" jucerVersion="5.3.2" companyEmail="rudrich@iem.at"
-              companyWebsite="users.iem.at/rudrich">
+              companyEmail="rudrich@iem.at" companyWebsite="users.iem.at/rudrich"
+              jucerFormatVersion="1">
   <MAINGROUP id="ISY70J" name="BaGLApp">
     <GROUP id="{30298E2E-85EE-45E6-006B-EFA7E39B3CA6}" name="drumparts">
       <FILE id="e5Y56l" name="bd_32768.wav" compile="0" resource="1" file="Source/drumparts/bd_32768.wav"/>
@@ -39,7 +39,7 @@
   </MAINGROUP>
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" extraDefs="DEFTEST=1" smallIcon="xZFUoe"
-               bigIcon="HhvRYv" externalLibraries="fftw3f">
+               bigIcon="HhvRYv" microphonePermissionNeeded="1">
       <CONFIGURATIONS>
         <CONFIGURATION name="Debug" isDebug="1" optimisation="1" targetName="BaGLApp"
                        headerPath="/usr/local/include" libraryPath="/usr/local/lib/"/>
@@ -64,7 +64,7 @@
         <MODULEPATH id="juce_dsp" path="../../../../../Applications/JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
-    <XCODE_IPHONE targetFolder="Builds/iOS" iosScreenOrientation="portraitlandscape"
+    <XCODE_IPHONE targetFolder="Builds/iOS" iosScreenOrientation="UIInterfaceOrientationPortrait,UIInterfaceOrientationLandscapeLeft,UIInterfaceOrientationLandscapeRight"
                   microphonePermissionNeeded="1" extraDefs="" externalLibraries="fftw3f">
       <CONFIGURATIONS>
         <CONFIGURATION name="Debug" isDebug="1" optimisation="1" targetName="BaGLApp"
@@ -133,7 +133,7 @@
     <MODULE id="juce_opengl" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_video" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
   </MODULES>
-  <JUCEOPTIONS JUCE_DSP_USE_STATIC_FFTW="1"/>
+  <JUCEOPTIONS/>
   <LIVE_SETTINGS>
     <OSX/>
   </LIVE_SETTINGS>
